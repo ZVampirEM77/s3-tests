@@ -222,6 +222,7 @@ def test_object_create_bad_md5_empty():
 @attr(method='put')
 @attr(operation='create w/non-graphics in MD5')
 @attr(assertion='fails 403')
+@attr('fails_on_beast')
 @nose.with_setup(teardown=_clear_custom_headers)
 def test_object_create_bad_md5_unreadable():
     key = _setup_bad_object({'Content-MD5': '\x07'})
@@ -749,6 +750,7 @@ def test_object_create_bad_ua_empty_aws2():
 @attr(method='put')
 @attr(operation='create w/non-graphic user agent')
 @attr(assertion='succeeds')
+@attr('fails_on_beast')
 @nose.with_setup(teardown=_clear_custom_headers)
 def test_object_create_bad_ua_unreadable_aws2():
     key = _setup_bad_object({'User-Agent': '\x07'})
@@ -799,6 +801,7 @@ def test_object_create_bad_date_empty_aws2():
 @attr(method='put')
 @attr(operation='create w/non-graphic date')
 @attr(assertion='fails 403')
+@attr('fails_on_beast')
 @nose.with_setup(teardown=_clear_custom_headers)
 def test_object_create_bad_date_unreadable_aws2():
     key = _setup_bad_object({'Date': '\x07'})
@@ -909,6 +912,7 @@ def test_bucket_create_bad_ua_empty_aws2():
 @attr(method='put')
 @attr(operation='create w/non-graphic user agent')
 @attr(assertion='succeeds')
+@attr('fails_on_beast')
 @nose.with_setup(teardown=_clear_custom_headers)
 def test_bucket_create_bad_ua_unreadable_aws2():
     _add_custom_headers({'User-Agent': '\x07'})
@@ -959,6 +963,7 @@ def test_bucket_create_bad_date_empty_aws2():
 @attr(method='put')
 @attr(operation='create w/non-graphic date')
 @attr(assertion='fails 403')
+@attr('fails_on_beast')
 @nose.with_setup(teardown=_clear_custom_headers)
 def test_bucket_create_bad_date_unreadable_aws2():
     _add_custom_headers({'Date': '\x07'})

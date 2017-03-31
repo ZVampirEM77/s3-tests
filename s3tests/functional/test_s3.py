@@ -1158,6 +1158,7 @@ def test_object_set_get_unicode_metadata():
 @attr(operation='metadata write/re-write')
 @attr(assertion='non-UTF-8 values detected, but preserved')
 @attr('fails_strict_rfc2616')
+@attr('fails_on_beast')
 def test_object_set_get_non_utf8_metadata():
     bucket = get_new_bucket()
     key = boto.s3.key.Key(bucket)
@@ -1186,6 +1187,7 @@ def _set_get_metadata_unreadable(metadata, bucket=None):
 @attr(operation='metadata write')
 @attr(assertion='non-priting prefixes noted and preserved')
 @attr('fails_strict_rfc2616')
+@attr('fails_on_beast')
 def test_object_set_get_metadata_empty_to_unreadable_prefix():
     metadata = '\x04w'
     got = _set_get_metadata_unreadable(metadata)
@@ -1197,6 +1199,7 @@ def test_object_set_get_metadata_empty_to_unreadable_prefix():
 @attr(operation='metadata write')
 @attr(assertion='non-priting suffixes noted and preserved')
 @attr('fails_strict_rfc2616')
+@attr('fails_on_beast')
 def test_object_set_get_metadata_empty_to_unreadable_suffix():
     metadata = 'h\x04'
     got = _set_get_metadata_unreadable(metadata)
@@ -1207,6 +1210,7 @@ def test_object_set_get_metadata_empty_to_unreadable_suffix():
 @attr(method='put')
 @attr(operation='metadata write')
 @attr(assertion='non-priting in-fixes noted and preserved')
+@attr('fails_on_beast')
 def test_object_set_get_metadata_empty_to_unreadable_infix():
     metadata = 'h\x04w'
     got = _set_get_metadata_unreadable(metadata)
@@ -1218,6 +1222,7 @@ def test_object_set_get_metadata_empty_to_unreadable_infix():
 @attr(operation='metadata re-write')
 @attr(assertion='non-priting prefixes noted and preserved')
 @attr('fails_strict_rfc2616')
+@attr('fails_on_beast')
 def test_object_set_get_metadata_overwrite_to_unreadable_prefix():
     metadata = '\x04w'
     got = _set_get_metadata_unreadable(metadata)
@@ -1232,6 +1237,7 @@ def test_object_set_get_metadata_overwrite_to_unreadable_prefix():
 @attr(operation='metadata re-write')
 @attr(assertion='non-priting suffixes noted and preserved')
 @attr('fails_strict_rfc2616')
+@attr('fails_on_beast')
 def test_object_set_get_metadata_overwrite_to_unreadable_suffix():
     metadata = 'h\x04'
     got = _set_get_metadata_unreadable(metadata)
@@ -1245,6 +1251,7 @@ def test_object_set_get_metadata_overwrite_to_unreadable_suffix():
 @attr(method='put')
 @attr(operation='metadata re-write')
 @attr(assertion='non-priting in-fixes noted and preserved')
+@attr('fails_on_beast')
 def test_object_set_get_metadata_overwrite_to_unreadable_infix():
     metadata = 'h\x04w'
     got = _set_get_metadata_unreadable(metadata)
