@@ -8435,3 +8435,56 @@ def test_sse_kms_barb_transfer_13b():
     if 'kms_keyid' not in config['main']:
         raise SkipTest
     _test_sse_kms_customer_write(13, key_id = config['main']['kms_keyid'])
+
+
+@attr(resource='bucket')
+@attr(method='put')
+@attr(operation='Test HTTP PUT API which is called to enable rgw bucket logging!')
+@attr(assertion='bucket logging enabled')
+@attr('bucketlogging')
+def test_http_put_api_enable_bucket_logging(): 
+    bucket = get_new_bucket()
+    result = bucket.enable_logging(bucket.name, "log/")
+    eq(result, True)
+
+@attr(resource='bucket')
+@attr(method='get')
+@attr(operation='Test HTTP GET API which is called to get bucket logging info that is enabled!')
+@attr(assertion='get bucket logging enabled info include target bucket and target prefix')
+@attr('bucketlogging')
+def test_http_get_api_bucket_logging_enabled():
+    bucket = get_new_bucket()
+    result = bucket.enable_logging(bucket.name, "log/")
+    if result == True:
+        bl = bucket.get_logging_status()
+        eq(bl.target, bucket.name)
+        eq(bl.prefix, "log/")
+        eq(str(bl), '<BucketLoggingStatus: %s/%s (%s)>' % (bucket.name, "log/", ""))
+    else:
+        raise SkipTest
+
+@attr(resource='bucket')
+@attr(method='get')
+@attr(operation='Test HTTP GET API which is called to get bucket logging info that is disabled!')
+@attr(assertion='get bucket logging disabled info')
+@attr('bucketlogging')
+def test_http_get_api_bucket_logging_disabled():
+    bucket = get_new_bucket()
+    bl = bucket.get_logging_status()
+    eq(bl.target, None)
+    eq(bl.prefix, None)
+    eq(str(bl), '<BucketLoggingStatus: Disabled>')
+
+@attr(resource='bucket')
+@attr(method='delete')
+@attr(operation='Test HTTP DELETE API which is called to disable rgw bucket logging!')
+@attr(assertion='bucket logging disabled')
+@attr('bucketlogging')
+def test_http_del_api_disable_bucket_logging():
+    bucket = get_new_bucket()
+    result = bucket.enable_logging(bucket.name, "log/")
+    if result == True:
+        result = bucket.disable_logging()
+        eq(result, True)
+    else:
+        raise SkipTest
