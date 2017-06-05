@@ -8488,3 +8488,73 @@ def test_http_del_api_disable_bucket_logging():
         eq(result, True)
     else:
         raise SkipTest
+
+@attr(resource='bucket')
+@attr(method='put')
+@attr(operation='Test LDG acl verifying without WRITE and READ_ACP permission to target bucket')
+@attr(assertion='failed and return 400, error code is InvalidTargetBucketForLogging')
+@attr('bucketlogging')
+def test_ldg_acl_verifying_without_write_and_read_acp_perm_to_target_bucket():
+    source_bucket = get_new_bucket()
+    target_bucket = get_new_bucket()
+    try:
+        source_bucket.enable_logging(target_bucket.name, "log/")
+    except boto.exception.S3ResponseError, e:
+	eq(e.status, 400)
+	eq(e.reason, 'Bad Request')
+	eq(e.error_code, 'InvalidTargetBucketForLogging')
+
+@attr(resource='bucket')
+@attr(method='put')
+@attr(operation='Test LDG acl verifying with WRITE permission to target bucket')
+@attr(assertion='failed and return 400, error code is InvalidTargetBucketForLogging')
+@attr('bucketlogging')
+def test_ldg_acl_verifying_with_write_perm_to_target_bucket():
+    source_bucket = get_new_bucket()
+    target_bucket = get_new_bucket()
+    tpolicy = target_bucket.get_acl()
+    write_grant = boto.s3.acl.Grant(permission = "WRITE", type = "Group", uri = target_bucket.LoggingGroup)
+    tpolicy.acl.add_grant(write_grant)
+    target_bucket.set_acl(tpolicy)
+    try:
+        source_bucket.enable_logging(target_bucket.name, "log/")
+    except boto.exception.S3ResponseError, e:
+	eq(e.status, 400)
+	eq(e.reason, 'Bad Request')
+	eq(e.error_code, 'InvalidTargetBucketForLogging')
+
+@attr(resource='bucket')
+@attr(method='put')
+@attr(operation='Test LDG acl verifying with READ_ACP permission to target bucket')
+@attr(assertion='failed and return 400, error code is InvalidTargetBucketForLogging')
+@attr('bucketlogging')
+def test_ldg_acl_verifying_with_read_acp_perm_to_target_bucket():
+    source_bucket = get_new_bucket()
+    target_bucket = get_new_bucket()
+    tpolicy = target_bucket.get_acl()
+    read_grant = boto.s3.acl.Grant(permission = "READ_ACP", type = "Group", uri = target_bucket.LoggingGroup)
+    tpolicy.acl.add_grant(read_grant)
+    target_bucket.set_acl(tpolicy)
+    try:
+        source_bucket.enable_logging(target_bucket.name, "log/")
+    except boto.exception.S3ResponseError, e:
+	eq(e.status, 400)
+	eq(e.reason, 'Bad Request')
+	eq(e.error_code, 'InvalidTargetBucketForLogging')
+
+@attr(resource='bucket')
+@attr(method='put')
+@attr(operation='Test LDG acl verifying with WRITE and READ_ACP permission to target bucket')
+@attr(assertion='success, bucket logging enabled')
+@attr('bucketlogging')
+def test_ldg_acl_verifying_with_write_and_read_acp_perm_to_target_bucket():
+    source_bucket = get_new_bucket()
+    target_bucket = get_new_bucket()
+    tpolicy = target_bucket.get_acl()
+    write_grant = boto.s3.acl.Grant(permission = "WRITE", type = "Group", uri = target_bucket.LoggingGroup)
+    tpolicy.acl.add_grant(write_grant)
+    read_grant = boto.s3.acl.Grant(permission = "READ_ACP", type = "Group", uri = target_bucket.LoggingGroup)
+    tpolicy.acl.add_grant(read_grant)
+    target_bucket.set_acl(tpolicy)
+    result = source_bucket.enable_logging(target_bucket.name, "log/")
+    eq(result, True)   
