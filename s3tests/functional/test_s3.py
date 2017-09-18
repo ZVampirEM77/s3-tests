@@ -9298,3 +9298,180 @@ def test_delete_tags_obj_public():
     tags = _get_obj_tags(bucket, key.name)
     eq(len(tags),0)
     #eq(input_tagset, res_tagset)
+
+@attr(resource='object')
+@attr(method='put')
+@attr(operation='Test put object upload using default storage class')
+@attr(assertion='success and storage class of object is STANDARD')
+@attr('storage_class')
+@attr('set_storage_class')
+def test_put_obj_using_default_storage_class():
+    bucket = get_new_bucket()
+    key = bucket.new_key('foo')
+    key.set_contents_from_string('storage class test')
+    get_data = key.get_contents_as_string()
+    eq(get_data, "storage class test")
+    eq(key.storage_class, "STANDARD")
+
+@attr(resource='object')
+@attr(method='put')
+@attr(operation='Test put object upload with explicit storage class')
+@attr(assertion='success and storage class of object is the specified one')
+@attr('storage_class')
+@attr('set_storage_class')
+def test_put_obj_with_storage_class():
+    bucket = get_new_bucket()
+    key = bucket.new_key('foo')
+    key.set_contents_from_string('storage class test', \
+                      headers = {'x-amz-storage-class': 'REDUCED_REDUNDANCY'})
+    get_data = key.get_contents_as_string()
+    eq(get_data, "storage class test")
+    eq(key.storage_class, "REDUCED_REDUNDANCY")
+
+@attr(resource='object')
+@attr(method='post')
+@attr(operation='Test post object upload using default storage class')
+@attr(assertion='success and storage class of object is STANDARD')
+@attr('storage_class')
+@attr('set_storage_class')
+def test_post_obj_using_default_storage_class():
+    bucket = get_new_bucket()
+
+    url = _get_post_url(s3.main, bucket)
+
+    utc = pytz.utc
+    expires = datetime.datetime.now(utc) + datetime.timedelta(seconds=+6000)
+
+    policy_document = {
+        "expiration": expires.strftime("%Y-%m-%dT%H:%M:%SZ"),\
+        "conditions": [\
+	    {"bucket": bucket.name},\
+	    ["starts-with", "$key", "foo"],\
+	    {"acl": "private"},\
+	    ["starts-with", "$Content-Type", "text/plain"],\
+	    ["content-length-range", 0, 1024]\
+	]\
+    }
+
+    json_policy_document = json.JSONEncoder().encode(policy_document)
+    policy = base64.b64encode(json_policy_document)
+    conn = s3.main
+    signature = base64.b64encode(hmac.new(conn.aws_secret_access_key, policy, sha).digest())
+
+    payload = OrderedDict([
+        ("key" , "foo.txt"),
+        ("AWSAccessKeyId" , conn.aws_access_key_id),\
+        ("acl" , "private"),
+        ("signature" , signature),
+        ("policy" , policy),\
+        ("Content-Type" , "text/plain"),
+        ("file", ("storage class test"))])
+
+    r = requests.post(url, files = payload)
+    eq(r.status_code, 204)
+    key = bucket.get_key("foo.txt")
+    get_data = key.get_contents_as_string()
+    eq(get_data, "storage class test")
+    eq(key.storage_class, "STANDARD")
+
+@attr(resource='object')
+@attr(method='post')
+@attr(operation='Test post object upload with explicit storage class')
+@attr(assertion='success and storage class of object is the specified one')
+@attr('storage_class')
+@attr('set_storage_class')
+def test_post_obj_with_storage_class():
+    bucket = get_new_bucket()
+
+    url = _get_post_url(s3.main, bucket)
+
+    utc = pytz.utc
+    expires = datetime.datetime.now(utc) + datetime.timedelta(seconds=+6000)
+
+    policy_document = {
+        "expiration": expires.strftime("%Y-%m-%dT%H:%M:%SZ"),\
+        "conditions": [\
+	    {"bucket": bucket.name},\
+	    ["starts-with", "$key", "foo"],\
+	    {"acl": "private"},\
+	    ["starts-with", "$Content-Type", "text/plain"],\
+	    ["starts-with", "$x-amz-storage-class", ""],\
+	    ["content-length-range", 0, 1024]
+	]\
+    }
+
+    json_policy_document = json.JSONEncoder().encode(policy_document)
+    policy = base64.b64encode(json_policy_document)
+    conn = s3.main
+    signature = base64.b64encode(hmac.new(conn.aws_secret_access_key, policy, sha).digest())
+
+    payload = OrderedDict([
+        ("key" , "foo.txt"),
+        ("AWSAccessKeyId" , conn.aws_access_key_id),\
+        ("acl" , "private"),
+        ("signature" , signature),
+        ("policy" , policy),\
+        ("Content-Type" , "text/plain"),
+        ("x-amz-storage-class", "REDUCED_REDUNDANCY"),
+        ("file", ("storage class test"))])
+
+    r = requests.post(url, files = payload)
+    eq(r.status_code, 204)
+    key = bucket.get_key("foo.txt")
+    get_data = key.get_contents_as_string()
+    eq(get_data, "storage class test")
+    eq(key.storage_class, "REDUCED_REDUNDANCY")
+
+@attr(resource='object')
+@attr(method='put')
+@attr(operation='check multipart obj upload using default storage class')
+@attr(assertion='success and storage class of object is STANDARD')
+@attr('storage_class')
+@attr('set_storage_class')
+def test_multipart_upload_using_default_storage_class():
+    bucket = get_new_bucket()
+    key="multipart_test"
+    content_type='text/plain'
+    obj_len = 30 * 1024 * 1024
+    (upload, data) = _multipart_upload(bucket, key, obj_len, headers={'Content-Type': content_type})
+    upload.complete_upload()
+
+    head_result = _head_bucket(bucket)
+
+    eq(head_result.get('x-rgw-object-count', 1), 1)
+    eq(head_result.get('x-rgw-bytes-used', 30 * 1024 * 1024), 30 * 1024 * 1024)
+
+    obj=bucket.get_key(key)
+    get_data=obj.get_contents_as_string()
+    eq(len(get_data), obj.size)
+    eq(get_data, data)
+    eq(obj.content_type, content_type)
+    eq(obj.storage_class, "STANDARD")
+
+@attr(resource='object')
+@attr(method='put')
+@attr(operation='check multipart obj upload with explicit storage class')
+@attr(assertion='success and storage class of object is the specified one')
+@attr('storage_class')
+@attr('set_storage_class')
+def test_multipart_upload_with_storage_class():
+    bucket = get_new_bucket()
+    key="multipart_test"
+    content_type='text/plain'
+    obj_len = 30 * 1024 * 1024
+    (upload, data) = _multipart_upload(bucket, key, obj_len, \
+		     headers={'Content-Type': content_type, \
+                              'x-amz-storage-class': 'REDUCED_REDUNDANCY'})
+    upload.complete_upload()
+
+    head_result = _head_bucket(bucket)
+
+    eq(head_result.get('x-rgw-object-count', 1), 1)
+    eq(head_result.get('x-rgw-bytes-used', 30 * 1024 * 1024), 30 * 1024 * 1024)
+
+    obj=bucket.get_key(key)
+    get_data=obj.get_contents_as_string()
+    eq(len(get_data), obj.size)
+    eq(get_data, data)
+    eq(obj.content_type, content_type)
+    eq(obj.storage_class, "REDUCED_REDUNDANCY")
